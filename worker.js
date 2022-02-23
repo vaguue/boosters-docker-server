@@ -9,9 +9,14 @@ const fs = require('fs');
 
 const tryRm = async (id) => {
   try {
+    await exec(`docker kill worker${id}`);
+  } catch(e) {
+    //console.log(e);
+  }
+  try {
     await exec(`docker rm worker${id}`);
   } catch(e) {
-
+    //console.log(e);
   }
 }
 
@@ -21,9 +26,10 @@ async function processSubmit(config, submit) {//TODO add time limit
     mainServer, 
     testDatasetDir, finalDatasetDir, 
     champname, dockerAccess, secretKey,
+    timeLimit = 2700000,
     metric,
-    zipDir = '/tmp', metaInfoDir = '/tmp/meta',
-    solutionsDir = path.join('/tmp', `worker${id}`),
+    zipDir = '/home/user/zips', metaInfoDir = '/home/user/meta',
+    solutionsDir = path.join('/home/user/workers', `worker${id}`),
     dockerConfig = {} 
   } = config;
   const { 
@@ -35,17 +41,18 @@ async function processSubmit(config, submit) {//TODO add time limit
   const logger = log4js.getLogger(`worker${id}'s process`);
   logger.level = 'debug';
 
+  logger.debug(`time limit is ${timeLimit}ms`);
   await exec(`mkdir -p ${zipDir}`);
   await exec(`mkdir -p ${metaInfoDir}`);
   await exec(`mkdir -p ${solutionsDir}`);
 
   //const localName = `${commandname}-${new Date(Date.now()).toISOString()}-${uuidv4().slice(0, 4)}`;
-  const localName = `${commandname}-${tasknumber}-${Date.now()}-${uuidv4().slice(0, 4)}`;
+  const localName = `${commandname.replace(/ /g, '_')}-${tasknumber}-${Date.now()}-${uuidv4().slice(0, 4)}`;
   const solutionDir = path.join(solutionsDir, localName);
   //await exec(`mkdir -p ${solutionDir}`);
   const zip = await axios.get(
     `http://${mainServer}/us/sol/${file.folder || '/'}/${file.url}?`+
-    `champname=${champname}&commandname=${commandname}&dockerAccess=${dockerAccess}&secretKey=${secretKey}`,
+    `champname=${champname}&commandname=${encodeURI(commandname)}&dockerAccess=${dockerAccess}&secretKey=${secretKey}`,
     {
       responseType: 'arraybuffer',
     }
@@ -73,13 +80,29 @@ async function processSubmit(config, submit) {//TODO add time limit
   
   await tryRm(id);
 
+  let stoped = false;
+  let timerId = null;
   try {
     logger.debug(`test docker cmd: ${dockerCmd(testDatasetDir)}`);
+    timerId = setTimeout(async () => {
+      stoped = true;
+      await tryRm(id);
+      logger.debug('time limit reached');
+    }, timeLimit);
     const { stdout, stderr } = await exec(dockerCmd(testDatasetDir));
+    clearTimeout(timerId);
+    if (stoped) {
+      throw Error('Time limit');
+    }
     if (stderr) {
       throw stderr;
     }
   } catch(e) {
+    clearTimeout(timerId);
+    logger.debug(`test execution error: ${e}`)
+    if (stoped) {
+      return { status: 'error', statusMessage: 'Time limit'};
+    }
     return { status: 'error', statusMessage: 'Test error', logs: fs.readFileSync(path.join(solutionDir, 'output2.txt')).toString() };
   }
 
@@ -88,16 +111,29 @@ async function processSubmit(config, submit) {//TODO add time limit
   let executionTime = -1;
   try {
     logger.debug(`docker cmd: ${dockerCmd(finalDatasetDir)}`);
+    timerId = setTimeout(async () => {
+      stoped = true;
+      await tryRm(id);
+      logger.debug('time limit reached');
+    }, timeLimit);
     const { stdout, stderr } = await exec(dockerCmd(finalDatasetDir));
+    clearTimeout(timerId);
     const { stdout: metaRaw } = await exec(`docker inspect worker${id}`);
     fs.writeFileSync(path.join(metaInfoDir, localName), metaRaw);
     const meta = JSON.parse(metaRaw);
     executionTime = new Date(meta[0].State.FinishedAt) - new Date(meta[0].State.StartedAt);
+    if (stoped) {
+      throw Error('Time limit');
+    }
     if (stderr) {
       throw stderr;
     }
   } catch(e) {
+    clearTimeout(timerId);
     logger.debug(`execution error: ${e}`)
+    if (stoped) {
+      return { status: 'error', statusMessage: 'Time limit'};
+    }
     return { status: 'errorr', statusMessage: 'Execution error' };
   }
 
@@ -162,6 +198,8 @@ async function startWorker(config) {
       savedMsg = null;
     } catch(e) {
       logger.debug(`internal error: ${e}`);
+      const data = JSON.parse(msg.content);
+      const { commandname, champname, solnumber } = data;
       await reply(con, { ...config, commandname, solnumber }, { status: 'error', statusMessage: 'Internal error' });
       channel.ack(msg);
       //channel.nack(msg);

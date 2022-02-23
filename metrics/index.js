@@ -21,7 +21,8 @@ const metrics = {
     const errObj = {
         pubScore: -1,
         privScore: -1,
-        statusMesasge: 'Metric error',
+        status: 'error',
+        statusMessage: 'Metric error',
     };
     const getCmdRes = async (index) => {
       const cmd = 
@@ -45,8 +46,10 @@ const metrics = {
         return errObj;
       }
       return {
-        pubScore: await getCmdRes(process.env['PUB_INDEX_'+tasknumber]),
-        privScore: await getCmdRes(process.env['PRIV_INDEX_'+tasknumber]),
+        //pubScore: await getCmdRes(process.env['PUB_INDEX_'+tasknumber]),
+        //privScore: await getCmdRes(process.env['PRIV_INDEX_'+tasknumber]),
+        pubScore: await getCmdRes(process.env['PRIV_INDEX_'+tasknumber]),
+        privScore: -1,
       }
     } catch(e) {
       console.log(e);
