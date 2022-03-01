@@ -134,7 +134,7 @@ async function processSubmit(config, submit) {//TODO add time limit
     if (stoped) {
       return { status: 'error', statusMessage: 'Time limit'};
     }
-    return { status: 'errorr', statusMessage: 'Execution error' };
+    return { status: 'error', statusMessage: 'Execution error' };
   }
 
   try {

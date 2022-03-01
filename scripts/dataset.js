@@ -3,7 +3,8 @@ const { parse } = require('csv-parse/sync')
 const { stringify } = require('csv-stringify/sync');
 const fs = require('fs')
 
-const dataset = '/home/user/champdata/pub/test.csv';
+const answers = '/home/user/champdata/priv/HeadHunter_ans.csv';
+const dataset = '/home/user/champdata/pub/HeadHunter_test.csv';
 const testDataset = '/home/user/champdata/test/test.csv';
 const pubIdx = '/home/user/champdata/priv/HeadHunter_pub.csv';
 const privIdx = '/home/user/champdata/priv/HeadHunter_priv.csv';
@@ -20,13 +21,20 @@ async function main() {
     columns: true,
     skip_empty_lines: true
   });
-  //console.log(pubIdxData);
-  //console.log(privIdxData);
-  //console.log(datasetData);
-  const filterPub = datasetData.filter(e => !pubIdxData.find(v => v == e.review_id));
-  //console.log(datasetData.length, filterPub.length);
+  const answersData = parse(fs.readFileSync(answers).toString(), {
+    columns: true,
+    skip_empty_lines: true
+  });
+  /*const filterPub = datasetData.filter(e => !pubIdxData.find(v => v == e.review_id));
   const res = stringify(filterPub, { header: true });
+  fs.writeFileSync('out.csv', res);*/
+
+  const filterPriv = datasetData.filter(e => !privIdxData.find(v => v == e.review_id))
+    .map(e => ({...e, target: answersData.find(v => v.review_id == e.review_id).target}));
+  console.log(filterPriv);
+  const res = stringify(filterPriv, { header: true });
   fs.writeFileSync('out.csv', res);
+
   console.log('done');
 }
 
