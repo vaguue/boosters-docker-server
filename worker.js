@@ -179,7 +179,7 @@ async function startWorker(config) {
   const { id, champname, taskNumber = 0 } = config;
   const logger = log4js.getLogger(`worker${id}`);
   logger.level = 'debug';
-  const con = await amqp.connect(process.env.SERVER);
+  const con = await amqp.connect(process.env.RABBITMQ_SERVER);
   const channel = await con.createChannel();
   const queue = `${champname}-task${taskNumber}`;
   logger.debug(`working on queue ${queue}`);

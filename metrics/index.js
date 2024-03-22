@@ -10,6 +10,13 @@ require('dotenv').config();
 
 const okRex = /ok: ([0-9.]+)/;
 
+const getErrObj = () => ({
+  pubScore: -1,
+  privScore: -1,
+  status: 'error',
+  statusMessage: 'Metric error',
+});
+
 const metrics = {
   test: (solutionDir, tasknumber) => {
     return {
@@ -18,12 +25,7 @@ const metrics = {
     };
   },
   f1_hh: async (solutionDir, tasknumber) => {
-    const errObj = {
-        pubScore: -1,
-        privScore: -1,
-        status: 'error',
-        statusMessage: 'Metric error',
-    };
+    const errObj = getErrObj();
     const getCmdRes = async (index) => {
       const cmd = 
         `${path.join(__dirname, 'f1_hh.py')} `+
@@ -50,6 +52,40 @@ const metrics = {
         //privScore: await getCmdRes(process.env['PRIV_INDEX_'+tasknumber]),
         pubScore: await getCmdRes(process.env['PRIV_INDEX_'+tasknumber]),
         privScore: -1,
+      }
+    } catch(e) {
+      console.log(e);
+      return errObj;
+    }
+  },
+  mrr: async (solutionDir, tasknumber) => {
+    const errObj = getErrObj();
+    const getCmdRes = async (index) => {
+      const cmd = 
+        `${path.join(__dirname, 'mrr.py')} `+
+        `${process.env['ANSWERS_'+tasknumber]} ` + 
+        `${path.join(solutionDir, 'answers.pq')} ` +
+        `${index}`
+      ;
+
+      logger.debug(`metric cmd: ${cmd}`);
+      const { stdout, stderr } = await exec(cmd);
+      console.log(stdout);
+      if (okRex.test(stdout)) {
+        const score = parseFloat(okRex.exec(stdout)[1]);
+        return score;
+      }
+      else {
+        throw Error('metric cmd error');
+      }
+    }
+    try {
+      if (!fs.existsSync(path.join(solutionDir, 'answers.pq'))) {
+        return errObj;
+      }
+      return {
+        pubScore: await getCmdRes(process.env['PUB_INDEX_'+tasknumber]),
+        privScore: await getCmdRes(process.env['PRIV_INDEX_'+tasknumber]),
       }
     } catch(e) {
       console.log(e);

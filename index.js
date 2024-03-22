@@ -1,7 +1,3 @@
-//import amqp from 'amqplib';
-//import metrics from '@/lib/metrics';
-//import startWorker from './worker';
-
 const amqp = require('amqplib');
 const metrics = require('./metrics');
 const startWorker = require('./worker');
@@ -9,39 +5,28 @@ const startWorker = require('./worker');
 require('dotenv').config();
 
 async function main() {
-  startWorker({
-    id: 0,
-    taskNumber: 2,
-    //taskNumber: 1,
-    mainServer: process.env.MAIN_SERVER_IP, 
-    testDatasetDir: '/home/user/champdata/test', 
-    finalDatasetDir: '/home/user/champdata/pub', 
-    champname: 'HeadHunter', 
-    timeLimit: 2700000,
-    //timeLimit: 10000,
-    //champname: 'da', 
-    dockerAccess: process.env.MAIN_SERVER_DOCKER_ACCESS, 
-    secretKey: process.env.MAIN_SERVER_SECRET_KEY,
-    metric: metrics['f1_hh'],
-    dockerConfig: {
-      imageName: 'kaggle/python-gpu-build',
-      noGpu: false,
-    },
-  });
+  for (let i = 0; i < 2; ++i) {
+    startWorker({
+      id: i,
+      taskNumber: 2,
+      mainServer: process.env.MAIN_SERVER_IP,
+      testDatasetDir: '/home/seva/champdata/test',
+      finalDatasetDir: '/home/seva/champdata/pub',
+      champname: 'hh_recsys',
+      //champname: 'jaefji',
+      timeLimit: 4800000,
+      dockerAccess: process.env.MAIN_SERVER_DOCKER_ACCESS,
+      secretKey: process.env.MAIN_SERVER_SECRET_KEY,
+      metric: metrics['mrr'],
+      dockerConfig: {
+        imageName: 'serega/gpu',
+        noGpu: false,
+        memory: '80g',
+      },
+    });
+  }
 }
-
-//async function fromConfig(config) {
-//  return await Promise.all(config.workers.map(async e => {
-//    const metric = metrics[e.metric];
-//    return await startWorker({
-//      ...e,
-//      metric,
-//    });
-//  }));
-//}
 
 if (require.main === module) {
   main().catch(console.error);
 }
-
-//export { fromConfig };

@@ -11,12 +11,12 @@ module.exports = {
       script: `${__dirname}/start.sh`,
       watch_delay: 1000,
     },
-    {
+    /*{
       name: 'rabbitmq-wrapper', 
       script: `${__dirname}/rabbitmq.sh`,
       watch: ['rabbitmq.sh'],
       watch_delay: 1000,
       autorestart: false,
-    },
+    },*/
   ],
 };
