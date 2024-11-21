@@ -29,8 +29,7 @@
 TEST_DATASET_DIR=/home/user/champdata/test
 FINAL_DATASET_DIR=/home/user/champdata/pub
 В каждую положить данные из задачи, индексы для метрик итд
-
-+ сделать `mkdir -p /home/user/workers/worker0` (и для других воркеров, worker1, worker2 итд)
+и сделать `mkdir -p /home/user/workers/worker0` (и для других воркеров, worker1, worker2 итд)
 
 ### Содержимое .env (посмотреть .env в репозитории):
 
