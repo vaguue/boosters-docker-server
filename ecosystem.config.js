@@ -10,6 +10,9 @@ module.exports = {
       name, 
       script: `${__dirname}/start.sh`,
       watch_delay: 1000,
+      env: {
+        MY_ID: process.env.MY_ID,
+      },
     },
     {
       name: 'rabbitmq-wrapper', 
