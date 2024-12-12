@@ -10,7 +10,7 @@ require('dotenv').config();
 
 async function main() {
   startWorker({
-    id: 0,
+    id: process.env.MY_ID,
     taskNumber: 2,
     mainServer: process.env.MAIN_SERVER_IP, 
     testDatasetDir: process.env.TEST_DATASET_DIR, 
