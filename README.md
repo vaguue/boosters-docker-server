@@ -49,5 +49,5 @@ MAIN_SERVER_SECRET_KEY
 
 ## Пример запуска
 ```bash
-MY_ID=2 pm2 start ecosystem.config.js 
+MY_ID=0 pm2 start ecosystem.config.js 
 ```
