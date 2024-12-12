@@ -41,6 +41,13 @@ TIME_LIMIT
 MAIN_SERVER_DOCKER_ACCESS, 
 MAIN_SERVER_SECRET_KEY
 
+### Если таймлимит выше 30 мин:
+
+```bash
+docker exec -it rabbitmq bash
+rabbitmqctl eval 'application:set_env(rabbit, consumer_timeout, 21600000).'
+```
+
 ## Задачи
 1. Сделать ЦПУ сервак с брокером RabbitMQ (./rabbitmq.sh)
 2. Развернуть тестово докер-сервер (`npm i && npm start` после создания актуального .env)
